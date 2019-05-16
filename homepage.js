@@ -4,6 +4,8 @@ let controls;
 let renderer;
 let scene;
 let mesh;
+const mixers = [];
+const clock = new THREE.Clock();
 
 function init()  {
 
@@ -94,24 +96,29 @@ function createModels()  {
 
     let loader = new THREE.GLTFLoader();
 
-    /*
     loader.load( 'Parrot.glb', function ( gltf ) {
 
-        let meshOne = gltf.scene.children[ 0 ];
+        let modelOne = gltf.scene.children[ 0 ];
 
-        let s = 0.07;
-        meshOne.scale.set( s, s, s );
-        meshOne.castShadow = true;
-        meshOne.receiveShadow = true;
+        let s = 0.3;
+        modelOne.scale.set( s, s, s );
+        modelOne.castShadow = true;
+        modelOne.receiveShadow = true;
 
-        meshOne.position.x = -10;
-        meshOne.position.y = 1;
+        //meshOne.position.x = -10;
+        //meshOne.position.y = 1;
 
-        scene.add( meshOne );
+        const parrotAnimation = gltf.animations[ 0 ];
+        const parrotMixer = new THREE.AnimationMixer( modelOne );
+        mixers.push( parrotMixer );
+        const parrotAction = parrotMixer.clipAction( parrotAnimation );
+        parrotAction.play();
+
+        scene.add( modelOne );
 
     } );
-    */
-
+    
+    /*
     loader.load( 'tree.glb', function ( gltf ) {
 
         let meshTwo = gltf.scene.children[ 0 ];
@@ -119,6 +126,7 @@ function createModels()  {
         scene.add( meshTwo );
 
     } );
+    */
 
 }
 
@@ -132,6 +140,9 @@ function createRenderer()  {
 }
 
 function update()  {
+
+    const delta = clock.getDelta();
+    mixers.forEach( (mixer) => {mixer.update( delta ); } );
 
 }
 
