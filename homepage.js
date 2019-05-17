@@ -4,6 +4,13 @@ let controls;
 let renderer;
 let scene;
 let mesh;
+let raycaster;
+let mouse = new THREE.Vector2(), INTERSECTED;
+let parrotAnimation;
+let parrotMixer;
+let parrotAction;
+let parrotIntersect = false;
+
 const mixers = [];
 const clock = new THREE.Clock();
 
@@ -105,28 +112,22 @@ function createModels()  {
         modelOne.castShadow = true;
         modelOne.receiveShadow = true;
 
-        //meshOne.position.x = -10;
-        //meshOne.position.y = 1;
+        modelOne.position.x = -10;
+        modelOne.position.y = 1;
 
-        const parrotAnimation = gltf.animations[ 0 ];
-        const parrotMixer = new THREE.AnimationMixer( modelOne );
+        parrotAnimation = gltf.animations[ 0 ];
+        parrotMixer = new THREE.AnimationMixer( modelOne );
         mixers.push( parrotMixer );
-        const parrotAction = parrotMixer.clipAction( parrotAnimation );
+        parrotAction = parrotMixer.clipAction( parrotAnimation );
         parrotAction.play();
+
+        modelOne.name = "parrot";
 
         scene.add( modelOne );
 
     } );
-    
-    /*
-    loader.load( 'tree.glb', function ( gltf ) {
 
-        let meshTwo = gltf.scene.children[ 0 ];
-
-        scene.add( meshTwo );
-
-    } );
-    */
+    raycaster = new THREE.Raycaster();
 
 }
 
@@ -142,11 +143,36 @@ function createRenderer()  {
 function update()  {
 
     const delta = clock.getDelta();
+
+    if( !parrotIntersect ){
+        //console.log("Bail");
+        return;
+    }
+
     mixers.forEach( (mixer) => {mixer.update( delta ); } );
 
 }
 
 function render()  {
+
+    raycaster.setFromCamera( mouse, camera );
+    let intersects = raycaster.intersectObjects( scene.children, true );
+
+    if( intersects.length > 0 && intersects[ 0 ].object.name != "stars"){
+        if( INTERSECTED != intersects[ 0 ].object){
+
+            INTERSECTED = intersects[ 0 ].object;
+            //console.log("Intersect");
+            parrotIntersect = true;
+
+        }
+    }
+    else{
+
+        parrotIntersect = false;
+        INTERSECTED = null;
+
+    }
 
     renderer.render( scene, camera );
 
@@ -160,6 +186,14 @@ function onWindowResize()  {
 
 }
 
+function onDocumentMouseMove( event )  {
+
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = ( event.clientY / window.innerHeight ) * 2 - 1;
+
+}
+
 window.addEventListener( 'resize', onWindowResize );
+window.addEventListener( 'mousemove', onDocumentMouseMove, false );
 
 init();
