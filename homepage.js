@@ -6,10 +6,8 @@ let scene;
 let mesh;
 let raycaster;
 let mouse = new THREE.Vector2(), INTERSECTED;
-let parrotAnimation;
-let parrotMixer;
-let parrotAction;
 let parrotIntersect = false;
+let sphereIntersect = false;
 
 const mixers = [];
 const clock = new THREE.Clock();
@@ -115,10 +113,10 @@ function createModels()  {
         modelOne.position.x = -10;
         modelOne.position.y = 1;
 
-        parrotAnimation = gltf.animations[ 0 ];
-        parrotMixer = new THREE.AnimationMixer( modelOne );
+        const parrotAnimation = gltf.animations[ 0 ];
+        const parrotMixer = new THREE.AnimationMixer( modelOne );
         mixers.push( parrotMixer );
-        parrotAction = parrotMixer.clipAction( parrotAnimation );
+        const parrotAction = parrotMixer.clipAction( parrotAnimation );
         parrotAction.play();
 
         modelOne.name = "parrot";
@@ -126,7 +124,30 @@ function createModels()  {
         scene.add( modelOne );
 
     } );
+    /*
+    loader.load( '/sphere/AnimatedMorphSphere.gltf', function ( gltf )  {
 
+        let modelTwo = gltf.scene.children[ 0 ];
+
+        modelTwo.castShadow = true;
+        modelTwo.receiveShadow = true;
+
+        modelTwo.position.x = 10;
+        modelTwo.position.y = 1;
+
+        const sphereAnimation = gltf.animations[ 0 ];
+        const sphereMixer = new THREE.AnimationMixer( modelTwo );
+        mixers.push( tokyoMixer );
+        const sphereAction = sphereMixer.clipAction( sphereAnimation );
+        sphereAction.play();
+
+        modelTwo.name = "sphere";
+
+        scene.add( modelTwo );
+
+    } );
+    */
+   
     raycaster = new THREE.Raycaster();
 
 }
@@ -144,12 +165,12 @@ function update()  {
 
     const delta = clock.getDelta();
 
-    if( !parrotIntersect ){
-        //console.log("Bail");
-        return;
+    if( parrotIntersect ){
+        mixers[ 0 ].update( delta );
     }
-
-    mixers.forEach( (mixer) => {mixer.update( delta ); } );
+    if( sphereIntersect ){
+        mixers[ 1 ].update( delta );
+    }
 
 }
 
@@ -159,17 +180,31 @@ function render()  {
     let intersects = raycaster.intersectObjects( scene.children, true );
 
     if( intersects.length > 0 && intersects[ 0 ].object.name != "stars"){
-        if( INTERSECTED != intersects[ 0 ].object){
 
-            INTERSECTED = intersects[ 0 ].object;
-            //console.log("Intersect");
-            parrotIntersect = true;
+        if( INTERSECTED != intersects[ 0 ].object.name){
+
+            INTERSECTED = intersects[ 0 ].object.name;
+
+            if( INTERSECTED == "parrot"){
+                parrotIntersect = true;
+            }
+            else if( INTERSECTED == "sphere"){
+                tokyoIntersect = true;
+            }
 
         }
     }
+
     else{
 
-        parrotIntersect = false;
+        if( INTERSECTED == "parrot"){
+            parrotIntersect = false;
+        }
+
+        else if( INTERSECTED == "sphere"){
+            sphereIntersect = false;
+        }
+
         INTERSECTED = null;
 
     }
