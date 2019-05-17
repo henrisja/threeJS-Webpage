@@ -6,8 +6,8 @@ let scene;
 let mesh;
 let raycaster;
 let mouse = new THREE.Vector2(), INTERSECTED;
-let parrotIntersect = false;
-let sphereIntersect = false;
+let anemoneIntersect = false;
+let tokyoIntersect = false;
 
 const mixers = [];
 const clock = new THREE.Clock();
@@ -43,7 +43,7 @@ function createCamera() {
         1000
     );
 
-    camera.position.set( 0, 0, 30 );
+    camera.position.set( 0, 0, 60 );
 
 }
 
@@ -99,19 +99,19 @@ function createStars()  {
 
 function createModels()  {
 
+    
     let loader = new THREE.GLTFLoader();
-
+    
     loader.load( 'Parrot.glb', function ( gltf ) {
 
         let modelOne = gltf.scene.children[ 0 ];
 
-        let s = 0.3;
+        let s = 0.2;
         modelOne.scale.set( s, s, s );
         modelOne.castShadow = true;
         modelOne.receiveShadow = true;
 
-        modelOne.position.x = -10;
-        modelOne.position.y = 1;
+        modelOne.position.x = -30;
 
         const parrotAnimation = gltf.animations[ 0 ];
         const parrotMixer = new THREE.AnimationMixer( modelOne );
@@ -124,30 +124,57 @@ function createModels()  {
         scene.add( modelOne );
 
     } );
-    /*
-    loader.load( '/sphere/AnimatedMorphSphere.gltf', function ( gltf )  {
+    
+    
+    THREE.DRACOLoader.setDecoderPath('js/libs/draco/gltf/');
+    loader.setDRACOLoader( new THREE.DRACOLoader() );
+    loader.load( 'LittlestTokyo.glb', function ( gltf )  {
 
         let modelTwo = gltf.scene.children[ 0 ];
 
+        let s = 0.03;
+        modelTwo.scale.set( s, s, s );
         modelTwo.castShadow = true;
         modelTwo.receiveShadow = true;
 
-        modelTwo.position.x = 10;
-        modelTwo.position.y = 1;
+        modelTwo.position.y = 3;
+        modelTwo.rotateZ( Math.PI/2 ); 
 
-        const sphereAnimation = gltf.animations[ 0 ];
-        const sphereMixer = new THREE.AnimationMixer( modelTwo );
+        const tokyoAnimation = gltf.animations[ 0 ];
+        const tokyoMixer = new THREE.AnimationMixer( modelTwo );
         mixers.push( tokyoMixer );
-        const sphereAction = sphereMixer.clipAction( sphereAnimation );
-        sphereAction.play();
+        const tokyoAction = tokyoMixer.clipAction( tokyoAnimation );
+        tokyoAction.play();
 
-        modelTwo.name = "sphere";
+        modelTwo.name = "tokyo";
 
         scene.add( modelTwo );
 
     } );
-    */
-   
+
+    let newLoader = new THREE.FBXLoader();
+    newLoader.load( 'anemone.fbx', function ( object )  {
+
+        let s = 2;
+        object.scale.set( s, s, s );
+        object.castShadow = true;
+        object.receiveShadow = true;
+
+        object.position.x = 26;
+        object.position.y = -3;
+
+        const aMixer = new THREE.AnimationMixer( object );
+        mixers.push( aMixer );
+        const aAction = aMixer.clipAction( object.animations[ 0 ] );
+        aAction.play();
+
+        object.name = "anemone";
+
+        scene.add( object );
+
+    } );
+    
+
     raycaster = new THREE.Raycaster();
 
 }
@@ -165,12 +192,17 @@ function update()  {
 
     const delta = clock.getDelta();
 
-    if( parrotIntersect ){
+    //mixers.forEach( ( mixer ) => { mixer.update( delta ); } );
+
+    /*
+    if( anemoneIntersect ){
         mixers[ 0 ].update( delta );
     }
-    if( sphereIntersect ){
+    
+    if( tokyoIntersect ){
         mixers[ 1 ].update( delta );
     }
+    */
 
 }
 
@@ -184,27 +216,31 @@ function render()  {
         if( INTERSECTED != intersects[ 0 ].object.name){
 
             INTERSECTED = intersects[ 0 ].object.name;
-
-            if( INTERSECTED == "parrot"){
-                parrotIntersect = true;
+            
+            if( INTERSECTED == "anemone"){
+                anemoneIntersect = true;
+                console.log("intersect");
             }
-            else if( INTERSECTED == "sphere"){
+
+            /*
+            else if( INTERSECTED == "tokyo"){
                 tokyoIntersect = true;
+                console.log("tokyo");
             }
-
+            */
         }
     }
 
     else{
-
-        if( INTERSECTED == "parrot"){
-            parrotIntersect = false;
+        
+        if( INTERSECTED == "anemone"){
+            anemoneIntersect = false;
         }
-
-        else if( INTERSECTED == "sphere"){
-            sphereIntersect = false;
+        /*
+        else if( INTERSECTED == "tokyo"){
+            tokyoIntersect = false;
         }
-
+        */
         INTERSECTED = null;
 
     }
