@@ -6,9 +6,9 @@ let scene;
 let mesh;
 let raycaster;
 let mouse = new THREE.Vector2(), INTERSECTED;
-let anemoneIntersect = false;
-let tokyoIntersect = false;
+let tokyoIntersect, anemoneIntersect, parrotIntersect = false;
 
+const intersectObjects = [];
 const mixers = [];
 const clock = new THREE.Clock();
 
@@ -24,6 +24,7 @@ function init()  {
     createLights();
     createStars();
     createModels();
+    createIntersectBoxes();
     createRenderer();
 
     renderer.setAnimationLoop( () => {
@@ -102,7 +103,7 @@ function createModels()  {
     
     let loader = new THREE.GLTFLoader();
     
-    loader.load( 'Parrot.glb', function ( gltf ) {
+    loader.load( 'models/Parrot.glb', function ( gltf ) {
 
         let modelOne = gltf.scene.children[ 0 ];
 
@@ -124,11 +125,32 @@ function createModels()  {
         scene.add( modelOne );
 
     } );
-    
-    
+
+    let newLoader = new THREE.FBXLoader();
+    newLoader.load( 'models/anemone.fbx', function ( object )  {
+
+        let s = 2;
+        object.scale.set( s, s, s );
+        object.castShadow = true;
+        object.receiveShadow = true;
+
+        object.position.x = 26;
+        object.position.y = -3;
+
+        const aMixer = new THREE.AnimationMixer( object );
+        mixers.push( aMixer );
+        const aAction = aMixer.clipAction( object.animations[ 0 ] );
+        aAction.play();
+
+        object.name = "anemone";
+
+        scene.add( object );
+
+    } );
+
     THREE.DRACOLoader.setDecoderPath('js/libs/draco/gltf/');
     loader.setDRACOLoader( new THREE.DRACOLoader() );
-    loader.load( 'LittlestTokyo.glb', function ( gltf )  {
+    loader.load( 'models/LittlestTokyo.glb', function ( gltf )  {
 
         let modelTwo = gltf.scene.children[ 0 ];
 
@@ -151,32 +173,56 @@ function createModels()  {
         scene.add( modelTwo );
 
     } );
-
-    let newLoader = new THREE.FBXLoader();
-    newLoader.load( 'anemone.fbx', function ( object )  {
-
-        let s = 2;
-        object.scale.set( s, s, s );
-        object.castShadow = true;
-        object.receiveShadow = true;
-
-        object.position.x = 26;
-        object.position.y = -3;
-
-        const aMixer = new THREE.AnimationMixer( object );
-        mixers.push( aMixer );
-        const aAction = aMixer.clipAction( object.animations[ 0 ] );
-        aAction.play();
-
-        object.name = "anemone";
-
-        scene.add( object );
-
-    } );
     
-
     raycaster = new THREE.Raycaster();
 
+}
+
+function createIntersectBoxes() {
+
+    let geometry = new THREE.BoxGeometry( 14, 6, 15 );
+    let material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    material.transparent = true;
+    material.opacity = 0;
+    let parrotCube = new THREE.Mesh( geometry, material );
+
+    parrotCube.position.x = -30
+    parrotCube.position.z = -3;
+
+    parrotCube.name = "parrot";
+    intersectObjects.push( parrotCube );
+
+    scene.add( parrotCube );
+
+
+    geometry = new THREE.BoxGeometry( 15, 12, 15 );
+    material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    material.transparent = true;
+    material.opacity = 0;
+    let tokyoCube = new THREE.Mesh( geometry, material );
+
+    tokyoCube.position.y = 3;
+    tokyoCube.position.z = 2.5;
+
+    tokyoCube.name = "tokyo";
+    intersectObjects.push( tokyoCube );
+
+    scene.add( tokyoCube );
+
+    geometry = new THREE.BoxGeometry( 8, 10, 8 );
+    material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    material.transparent = true;
+    material.opacity = 0;
+    let anemoneCube = new THREE.Mesh( geometry, material );
+
+    anemoneCube.position.x = 26;
+    anemoneCube.position.y = 0;
+    anemoneCube.position.z = 2;
+
+    anemoneCube.name = "anemone";
+    intersectObjects.push( anemoneCube );
+
+    scene.add( anemoneCube );
 }
 
 function createRenderer()  {
@@ -192,55 +238,65 @@ function update()  {
 
     const delta = clock.getDelta();
 
-    //mixers.forEach( ( mixer ) => { mixer.update( delta ); } );
+    if(mixers.length == 3){
 
-    /*
-    if( anemoneIntersect ){
-        mixers[ 0 ].update( delta );
-    }
+        if( parrotIntersect ){
+            mixers[ 0 ].update( delta );
+        }
     
-    if( tokyoIntersect ){
-        mixers[ 1 ].update( delta );
+        if( tokyoIntersect ){
+            mixers[ 2 ].update( delta );
+        }
+
+        if( anemoneIntersect ){
+            mixers[ 1 ].update( delta );
+        }
     }
-    */
 
 }
 
 function render()  {
 
     raycaster.setFromCamera( mouse, camera );
-    let intersects = raycaster.intersectObjects( scene.children, true );
+    let intersects = raycaster.intersectObjects( intersectObjects );
 
-    if( intersects.length > 0 && intersects[ 0 ].object.name != "stars"){
+    if( intersects.length > 0){
 
         if( INTERSECTED != intersects[ 0 ].object.name){
 
             INTERSECTED = intersects[ 0 ].object.name;
             
-            if( INTERSECTED == "anemone"){
-                anemoneIntersect = true;
-                console.log("intersect");
+            if( INTERSECTED == "parrot"){
+                parrotIntersect = true;
+                console.log("parrot");
             }
 
-            /*
             else if( INTERSECTED == "tokyo"){
                 tokyoIntersect = true;
                 console.log("tokyo");
             }
-            */
+            
+            else if( INTERSECTED == "anemone"){
+                anemoneIntersect = true;
+                console.log("anemone");
+            }
         }
     }
 
     else{
         
-        if( INTERSECTED == "anemone"){
-            anemoneIntersect = false;
+        if( INTERSECTED == "parrot"){
+            parrotIntersect = false;
         }
-        /*
+        
         else if( INTERSECTED == "tokyo"){
             tokyoIntersect = false;
         }
-        */
+        
+        else if (INTERSECTED == "anemone"){
+            anemoneIntersect = false;
+        }
+
         INTERSECTED = null;
 
     }
